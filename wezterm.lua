@@ -5,7 +5,7 @@ local function hsl(color, saturation, brightness)
 end
 
 local colors = {
-    Background = hsl(250,50,15),
+    Background = hsl(250,27,15),
     Primary = {
         shade0 = hsl(250,100, 25),
         shade1 = hsl(250,100, 35),
@@ -47,7 +47,14 @@ return {
         'Segoe UI Emoji' 
     },
     window_background_opacity = 1,
-    font_size = 18.0,
+    font_size = 12.0,
+    keys = {
+        {
+            key = 'w',
+            mods = 'CTRL|SHIFT',
+            action = wezterm.action.CloseCurrentPane { confirm = true },
+        },
+    },
     colors = {
 
         foreground = colors.Secondary.shade3,
