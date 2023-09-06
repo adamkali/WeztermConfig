@@ -43,8 +43,8 @@ return {
     font = wezterm.font_with_fallback {
         'Recursive',
         { family = 'Recursive', weight = "Bold", stretch = "SemiCondensed" },
-        'Symbols Nerd Font Mono',
-        'Segoe UI Emoji' 
+        'Symbols NFM',
+        'Segoe UI Emoji'
     },
     window_background_opacity = 1,
     font_size = 12.0,
