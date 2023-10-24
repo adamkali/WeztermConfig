@@ -54,6 +54,18 @@ return {
             mods = 'CTRL|SHIFT',
             action = wezterm.action.CloseCurrentPane { confirm = true },
         },
+        {
+            key = 'w',
+            mods = 'SUPER|SHIFT',
+            action = wezterm.action.SpawnTab 'CurrentPaneDomain',
+        },
+    },
+    ssh_domains = {
+        {
+            name = 'efme-linux',
+            remote_address = '192.168.11.105',
+            username = 'efme',
+        }
     },
     colors = {
 
