@@ -1,3 +1,4 @@
+
 local wezterm = require 'wezterm';
 
 local function hsl(color, saturation, brightness)
@@ -5,7 +6,7 @@ local function hsl(color, saturation, brightness)
 end
 
 local colors = {
-    Background = hsl(250,27,15),
+    Background = hsl(250,70,10),
     Primary = {
         shade0 = hsl(250,100, 25),
         shade1 = hsl(250,100, 35),
@@ -40,24 +41,24 @@ local colors = {
 
 return {
     default_prog = { 'powershell.exe', '-NoLogo' },
+    --default_prog = { 'wsl.exe', '-d', 'Ubuntu-22.04'},
+    --default_cwd = "~",
     font = wezterm.font_with_fallback {
-        'Recursive',
-        { family = 'Recursive', weight = "Bold", stretch = "SemiCondensed" },
-        'Symbols NFM',
+        "GeistMono Nerd Font",
         'Segoe UI Emoji'
     },
     window_background_opacity = 1,
-    font_size = 12.0,
+    font_size = 16.0,
     keys = {
         {
-            key = 'w',
-            mods = 'CTRL|SHIFT',
+            key = 't',
+            mods = 'CTRL|ALT|SHIFT',
             action = wezterm.action.CloseCurrentPane { confirm = true },
         },
         {
-            key = 'w',
-            mods = 'SUPER|SHIFT',
-            action = wezterm.action.SpawnTab 'CurrentPaneDomain',
+            key = 'n',
+            mods = 'CTRL|ALT|SHIFT',
+            action = wezterm.action.SpawnTab 'DefaultDomain',
         },
     },
     ssh_domains = {
@@ -65,6 +66,11 @@ return {
             name = 'efme-linux',
             remote_address = '192.168.11.105',
             username = 'efme',
+        },
+        {
+            name = 'efme-mac',
+            remote_address = '192.168.11.130',
+            username = 'eFileMadeEasy'
         }
     },
     colors = {
@@ -103,14 +109,8 @@ return {
             hsl(250, 20, 80),
         },
 
-
         compose_cursor = 'orange',
 
-        -- Colors for copy_mode and quick_select
-        -- available since: 20220807-113146-c2fee766
-        -- In copy_mode, the color of the active text is:
-        -- 1. copy_mode_active_highlight_* if additional text was selected using the mouse
-        -- 2. selection_* otherwise
         copy_mode_active_highlight_bg = { Color = '#000000' },
         -- use `AnsiColor` to specify one of the ansi color palette values
         -- (index 0-15) using one of the names "Black", "Maroon", "Green",
