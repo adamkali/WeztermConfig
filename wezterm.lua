@@ -1,55 +1,65 @@
 local wezterm = require 'wezterm';
+local vaporlush = require 'vaporlush';
 
-local function hsl(color, saturation, brightness)
-    return string.format("hsl:%d %d %d", color, saturation, brightness)
-end
-
--- The filled in variant of the < symbol
-local SOLID_LEFT_ARROW = wezterm.nerdfonts.ple_left_half_circle_thick
-local SOLID_RIGHT_ARROW = wezterm.nerdfonts.ple_right_half_circle_thick
+-- Shade unicode character for tab separators (matching tmux style)
+local SHADE = '▓'
 local NVIM_LOGO = wezterm.nerdfonts.custom_neovim
-
-local colors = {
-    Background = '#2b2042',
-    Primary    = { shade0 = hsl(250, 100, 25), shade1 = hsl(250, 100, 35), shade2 = hsl(250, 100, 55), shade3 = hsl(250, 100, 85), },
-    Secondary  = { shade0 = hsl(300, 75, 20), shade1 = hsl(300, 75, 40), shade2 = hsl(300, 75, 60), shade3 = hsl(300, 75, 80), },
-    Tertiary   = { shade0 = hsl(50, 75, 40), shade1 = hsl(50, 75, 50), shade2 = hsl(50, 75, 60), shade3 = hsl(50, 75, 70), },
-    Quartenary = { shade0 = hsl(0, 100, 20), shade1 = hsl(0, 100, 40), shade2 = hsl(0, 100, 60), shade3 = hsl(0, 100, 80), },
-    Quintary   = { shade0 = hsl(170, 100, 20), shade1 = hsl(170, 100, 40), shade2 = hsl(170, 100, 60), shade3 = hsl(170, 100, 80), }
-}
-
 local act = wezterm.action
 
 -- This function returns the suggested title for a tab.
 -- It prefers the title that was set via `tab:set_title()`
 -- or `wezterm cli set-tab-title`, but falls back to the
--- title of the active pane in that tab.
+-- application name of the active pane.
 local function tab_title(tab_info)
     local title = tab_info.tab_title
     -- if the tab title is explicitly set, take that
     if title and #title > 0 then
         return title
     end
-    -- Otherwise, use the title from the active pane
-    -- in that tab
-    title = tab_info.active_pane.title
-    title = title:gsub('nvim', NVIM_LOGO .. '  ')
-    return title
+
+    -- Get the process name
+    local process_name = tab_info.active_pane.foreground_process_name
+    if process_name then
+        -- Extract just the process name without path
+        process_name = process_name:match("([^/\\]+)$") or process_name
+
+        -- If it's WSL, parse the actual command from the title
+        if process_name == "wsl.exe" or process_name == "wslhost.exe" then
+            local pane_title = tab_info.active_pane.title
+            -- Try to extract the command from common title patterns
+            -- Pattern like "nvim file.lua" or "bash" or "user@host:~ command"
+            local command = pane_title:match("^(%S+)") or pane_title
+            command = command:match("([^:@]+)$") or command
+
+            -- Check if it's nvim
+            if command == "nvim" then
+                return NVIM_LOGO
+            end
+            return command
+        end
+
+        -- Check if it's specifically nvim
+        if process_name == "nvim" or process_name == "nvim.exe" then
+            return NVIM_LOGO
+        end
+        return process_name
+    end
+    return tab_info.active_pane.title
 end
 
 wezterm.on(
     'format-tab-title',
     function(tab, tabs, panes, config, hover, max_width)
-        local edge_background = '#241B2F'
-        local background      = colors.Primary.shade0
-        local foreground      = '#808080'
+        local edge_background = vaporlush.background
+        local background      = vaporlush.background
+        local foreground      = vaporlush.foreground
 
         if tab.is_active then
-            background = colors.Primary.shade2
-            foreground = colors.Quintary.shade3
+            background = '#352ff5'  -- primary2
+            foreground = '#ffb68c'  -- quartary3
         elseif hover then
-            background = colors.Primary.shade1
-            foreground = colors.Quintary.shade2
+            background = '#0b03fc'  -- primary1
+            foreground = '#fa34a1'  -- secondary2
         end
 
         local edge_foreground = background
@@ -59,13 +69,13 @@ wezterm.on(
         return {
             { Background = { Color = edge_background } },
             { Foreground = { Color = edge_foreground } },
-            { Text = SOLID_LEFT_ARROW },
+            { Text = SHADE },
             { Background = { Color = background } },
             { Foreground = { Color = foreground } },
             { Text = title },
             { Background = { Color = edge_background } },
             { Foreground = { Color = edge_foreground } },
-            { Text = SOLID_RIGHT_ARROW },
+            { Text = SHADE },
         }
     end
 )
@@ -75,71 +85,53 @@ return {
     default_prog = { 'wsl.exe', '-d', 'Ubuntu-22.04' },
     --default_cwd = "~",
     font = wezterm.font_with_fallback {
-        "Maple Mono NF",
-        'Segoe UI Emoji'
+        { family = "MartianMono Nerd Font Propo", weight = "Regular" },
+		{ family = "Noto Color Emoji", weight = "Regular" },
     },
     window_background_opacity = 1,
+    text_background_opacity = 1,
+    win32_system_backdrop = "Acrylic",
     hide_tab_bar_if_only_one_tab = false,
     window_padding = { left = 0, right = 0, top = 0, bottom = 0 },
-    tab_max_width = 16,
+    tab_max_width = 18,
     window_frame = {
-        inactive_titlebar_bg = '#353535',
-        active_titlebar_bg = '#241B2F',
-        button_fg = '#cccccc',
-        button_bg = '#ffffff',
-        button_hover_fg = '#ffffff',
-        button_hover_bg = colors.Primary.shade0,
-        font_size = 12.0,
-
+        active_titlebar_bg = vaporlush.background,
+        font_size = 14.5,
     },
-    font_size = 16,
+    tab_bar_at_bottom = false,
+    use_fancy_tab_bar = false,
+    tab_bar_style = {
+        window_hide = '',
+        window_hide_hover = '',
+        window_maximize = '',
+        window_maximize_hover = '',
+        window_close = '',
+        window_close_hover = '',
+    },
+	-- this is not needed anymore.
+	-- i use fts switcher written by my self now lol
+	--
+    -- ssh_domains = {
+    --     {
+    --         -- This name identifies the domain
+    --         name = 'snickers2',
+    --         -- The hostname or address to connect to. Will be used to match settings
+    --         -- from your ssh config file
+    --         remote_address = 'kalilarosa.xyz',
+    --         -- The username to use on the remote host
+    --         username = 'kalilarosa',
+    --     },
+    -- },
+    font_size = 13.5,
     keys = {
         { key = 'q', mods = 'CTRL|ALT|SHIFT', action = act.CloseCurrentPane { confirm = true }, },
         { key = 'c', mods = 'CTRL|ALT|SHIFT', action = act.SpawnTab 'CurrentPaneDomain', },
-        { key = 'v', mods = 'CTRL|ALT|SHIFT', action = act.SplitHorizontal { domain = 'CurrentPaneDomain' }, },
-        { key = 'z', mods = 'CTRL|ALT|SHIFT', action = act.SplitVertical { domain = 'CurrentPaneDomain' }, },
+        { key = '\\', mods = 'CTRL|ALT|SHIFT', action = act.SplitHorizontal { domain = 'CurrentPaneDomain' }, },
+        { key = '-', mods = 'CTRL|ALT|SHIFT', action = act.SplitVertical { domain = 'CurrentPaneDomain' }, },
         { key = 'h', mods = 'CTRL|ALT|SHIFT', action = act.ActivatePaneDirection 'Left', },
         { key = 's', mods = 'CTRL|ALT|SHIFT', action = act.ActivatePaneDirection 'Right', },
         { key = 'n', mods = 'CTRL|ALT|SHIFT', action = act.ActivatePaneDirection 'Up', },
-        { key = 't', mods = 'CTRL|ALT|SHIFT', action = act.ActivatePaneDirection 'Down', },
+        { key = 't', mods = 'CTRL|ALT|SHIFT', action = act.ActivatePaneDirection 'Down', }
     },
-    colors = {
-        foreground                      = colors.Secondary.shade3,
-        background                      = colors.Background,
-        cursor_bg                       = colors.Quintary.shade2,
-        cursor_fg                       = colors.Quartenary.shade0,
-        selection_fg                    = colors.Quintary.shade2,
-        selection_bg                    = colors.Quartenary.shade0,
-        scrollbar_thumb                 = colors.Tertiary.shade0,
-        split                           = colors.Secondary.shade0,
-        ansi                            = {
-            colors.Primary.shade0,
-            colors.Secondary.shade0,
-            colors.Quintary.shade1,
-            colors.Tertiary.shade1,
-            colors.Primary.shade1,
-            colors.Quartenary.shade1,
-            colors.Secondary.shade1,
-            hsl(250, 20, 40),
-        },
-        brights                         = {
-            colors.Primary.shade2,
-            colors.Secondary.shade2,
-            colors.Quintary.shade3,
-            colors.Tertiary.shade3,
-            colors.Primary.shade3,
-            colors.Quartenary.shade3,
-            colors.Secondary.shade3,
-            hsl(250, 20, 80),
-        },
-        compose_cursor                  = 'orange',
-        copy_mode_active_highlight_bg   = { Color = '#000000' },
-        copy_mode_active_highlight_fg   = { AnsiColor = 'Black' },
-        copy_mode_inactive_highlight_bg = { Color = '#52ad70' },
-        copy_mode_inactive_highlight_fg = { AnsiColor = 'White' },
-        quick_select_label_bg           = { Color = 'peru' },
-        quick_select_label_fg           = { Color = '#ffffff' },
-        quick_select_match_bg           = { AnsiColor = 'Navy' },
-        quick_select_match_fg           = { Color = '#ffffff' },
-    }
+    colors = vaporlush
 }
